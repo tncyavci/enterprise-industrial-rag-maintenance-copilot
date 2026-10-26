@@ -1,6 +1,8 @@
 # Enterprise Industrial Hybrid RAG & Maintenance Copilot
 
-**KVKK/GDPR PII-Redacting Hybrid RAG (Okapi BM25 + Character N-Gram Dense Reciprocal Rank Fusion), Role-Based Access Control (RBAC), and ISO 45001 Lockout/Tagout (LOTO) Citation Guardrails built with Python, FastAPI, and Pydantic v2.**
+[![CI](https://github.com/tncyavci/enterprise-industrial-rag-maintenance-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/tncyavci/enterprise-industrial-rag-maintenance-copilot/actions/workflows/ci.yml)
+
+**KVKK/GDPR PII-Redacting Hybrid RAG (Okapi BM25 + Character N-Gram Dense Reciprocal Rank Fusion), SQLite Compliance Audit Trail, Vision/Sensor Defect Triage, FastMCP Tool Server, and ISO 45001 Lockout/Tagout (LOTO) Citation Guardrails built with Python, FastAPI, Streamlit, and Pydantic v2.**
 
 Designed for enterprise manufacturing, automotive R&D, aviation MRO, and regulated banking/corporate IT environments where Standard Operating Procedures (SOPs), maintenance manuals, and incident tickets cannot be sent to external LLMs without strict **Turkish KVKK / GDPR PII sanitization**, **document-level RBAC clearance enforcement**, and **zero-hallucination verbatim citation proofs**.
 
