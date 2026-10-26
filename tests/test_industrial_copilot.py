@@ -105,3 +105,33 @@ def test_fastapi_endpoints_return_grounded_response() -> None:
     assert "[REDACTED_TCKN]" in payload["sanitized_query"]
     assert payload["lockout_tagout_mandatory"] is True
     assert len(payload["citations"]) >= 1
+
+
+def test_vision_telemetry_triage_and_sqlite_audit_trail() -> None:
+    client = TestClient(create_app())
+    triage_resp = client.post(
+        "/api/v1/copilot/triage-telemetry",
+        json={
+            "snapshot": {
+                "station_id": "BIW-WELD-09",
+                "ocr_nameplate_text": "HARMONIC REDUCER SKU-HD-8841",
+                "servo_vibration_mm_s": 9.2,
+                "hv_isolation_ohm_per_volt": 540.0,
+                "paint_booth_pressure_pa": 110.0,
+            },
+            "user_clearance": "MAINTENANCE_ENGINEER_L2",
+        },
+    )
+    assert triage_resp.status_code == 200
+    body = triage_resp.json()
+    assert body["triage"]["anomaly_detected"] is True
+    assert "SRVO-053" in body["triage"]["detected_fault_codes"]
+    assert "SKU-HD-8841" in body["triage"]["extracted_skus"]
+    assert body["maintenance_plan"]["lockout_tagout_mandatory"] is True
+
+    audit_resp = client.get("/api/v1/copilot/audit-logs")
+    assert audit_resp.status_code == 200
+    logs = audit_resp.json()
+    assert len(logs) >= 1
+    assert logs[0]["loto_mandatory"] is True
+
