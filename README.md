@@ -43,6 +43,17 @@ Pure vector search frequently fails on industrial part numbers (`SKU-HD-8841`, `
 - **Zero-Hallucination Citation Validator:** Pydantic v2 `@model_validator` rejects any non-abstained response that lacks a verbatim `CitationEvidence` quote from an authorized `SOP-*` document.
 - **ISO 45001 Safety Interlock:** Any procedure classified as `IMMEDIATE_LINE_STOP` is mathematically forced to set `lockout_tagout_mandatory=True`.
 
+### 4. Persistent SQLite Knowledge & Immutable KVKK/RBAC Audit Trail (`SqliteEnterpriseKnowledgeStore`)
+- Persists all Standard Operating Procedure (`SOP-*`) chunks and records every operator query into an immutable `compliance_audit_log` table with UTC timestamps, caller clearance tier, PII redaction counts, LOTO enforcement flags, and cited document IDs.
+- Exposed via `GET /api/v1/copilot/audit-logs` and `POST /api/v1/copilot/sop` for enterprise compliance officers.
+
+### 5. Vision OCR Nameplate & Sensor Telemetry Defect Triager (`VisionTelemetryDefectTriager`)
+- Combines noisy industrial camera OCR nameplate text (`SKU-HD-8841`, `MSD-PLUG-900`) with physical sensor telemetry thresholds (**ISO 10816** servo vibration `>= 7.1 mm/s`, **ECE R100** HV battery isolation `< 100 Ohm/V`, and paint-booth differential pressure `> 240 Pa`) via `POST /api/v1/copilot/triage-telemetry`.
+
+### 6. Model Context Protocol (`FastMCP`) Server & Interactive Streamlit Console
+- **`mcp_server.py`:** Exposes `query_industrial_maintenance_sop`, `triage_station_telemetry_and_ocr`, and `get_kvkk_compliance_audit_trail` as standardized MCP tools for autonomous AI agents.
+- **`app.py` & `Dockerfile`:** Interactive 3-tab Streamlit operator/auditor console and containerized multi-service deployment.
+
 ---
 
 ## Quick Start & Testing
@@ -55,8 +66,14 @@ pip install -e ".[dev]"
 # Run unit & API integration tests
 pytest -v
 
-# Start FastAPI server
+# Start FastAPI REST server
 uvicorn industrial_rag_copilot.api:app --reload --port 8090
+
+# Launch interactive Streamlit Engineering & Audit Console
+streamlit run app.py
+
+# Run FastMCP Server for LLM Agent Tool Calling
+python mcp_server.py
 ```
 
 ---
@@ -65,12 +82,20 @@ uvicorn industrial_rag_copilot.api:app --reload --port 8090
 
 ```text
 ├── pyproject.toml
+├── Dockerfile                # Production container image (Python 3.11-slim + FastAPI)
+├── app.py                    # Interactive 3-tab Streamlit Operator, Telemetry & Audit Console
+├── mcp_server.py             # FastMCP tool server for LLM agent integration
+├── docs/adr/
+│   └── ADR-001-hybrid-rrf-and-kvkk-guardrails.md
 ├── src/industrial_rag_copilot/
-│   ├── models.py          # Pydantic v2 schemas, RBAC enums, LOTO & citation guardrails
-│   ├── pii_redactor.py    # KVKK/GDPR PII redactor & TCKN checksum validator
-│   ├── retriever.py       # Okapi BM25 + Dense Trigram Reciprocal Rank Fusion (RRF)
-│   ├── service.py         # Orchestration service & abstention handling
-│   └── api.py             # FastAPI REST endpoints (/health, /api/v1/copilot/query)
+│   ├── models.py             # Pydantic v2 schemas, RBAC enums, LOTO & citation guardrails
+│   ├── pii_redactor.py       # KVKK/GDPR PII redactor & algorithmic TCKN checksum validator
+│   ├── retriever.py          # Okapi BM25 + Dense Trigram Reciprocal Rank Fusion (RRF)
+│   ├── persistent_store.py   # SQLite SOP repository & immutable KVKK/RBAC audit log store
+│   ├── vision_defect_triage.py # Camera OCR nameplate + ISO 10816 / HV sensor anomaly triager
+│   ├── service.py            # Orchestration service & abstention handling
+│   ├── api.py                # FastAPI REST endpoints (/health, /query, /triage-telemetry, /sop, /audit-logs)
+│   └── cli.py                # CLI runner for terminal diagnostics
 └── tests/
     └── test_industrial_copilot.py
 ```
